@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Evidence Locker - CRUD</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input { padding: 8px; margin-right: 10px; }
+        button { padding: 8px 15px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+        .evidence-item { border-bottom: 1px solid #ddd; padding: 10px 0; display: flex; justify-content: space-between; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>The Evidence Locker</h2>
+    
+    <div style="margin-bottom: 20px;">
+        <input type="text" id="clueInput" placeholder="Enter Clue Type (e.g. DNA)">
+        <button id="addBtn">Add Evidence</button>
+    </div>
+
+    <div id="evidenceDisplay">
+        Loading evidence...
+    </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBEGtNJ_0ItmlFc_dLHlvp0wBcf34ntG8g",
+  authDomain: "evidencelocker-bfc99.firebaseapp.com",
+  projectId: "evidencelocker-bfc99",
+  storageBucket: "evidencelocker-bfc99.firebasestorage.app",
+  messagingSenderId: "627105801756",
+  appId: "1:627105801756:web:2b410f95b2675981dca1d9",
+  measurementId: "G-2FYQL364E7"
+};
+
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const evidenceCol = collection(db, "evidence");
+
+  async function getEvidence() {
+    const querySnapshot = await getDocs(evidenceCol);
+    const display = document.getElementById("evidenceDisplay");
+    display.innerHTML = ""; 
+    querySnapshot.forEach((document) => {
+      const data = document.data();
+      display.innerHTML += `
+        <div class="evidence-item">
+            <span><strong>${data.clue_type}</strong> (Verified: ${data.is_verified})</span>
+            <button onclick="deleteEvidence('${document.id}')" style="background:red">Delete</button>
+        </div>`;
+    });
+  }
+
+  document.getElementById("addBtn").addEventListener("click", async () => {
+    const val = document.getElementById("clueInput").value;
+    if(val) {
+        await addDoc(evidenceCol, {
+            clue_type: val,
+            is_verified: false,
+            timestamp: new Date()
+        });
+        document.getElementById("clueInput").value = "";
+        getEvidence();
+    }
+  });
+
+  window.deleteEvidence = async (id) => {
+    await deleteDoc(doc(db, "evidence", id));
+    getEvidence();
+  };
+
+  getEvidence();
+</script>
+
+</body>
+</html>
